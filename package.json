@@ -1,0 +1,29 @@
+{
+  "name": "rollback-netcode-redux",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start:server": "npm run build && node build/server/server.js",
+    "start:client": "parcel client/index.html",
+    "build": "tsc",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@reduxjs/toolkit": "^1.6.2",
+    "fastify": "^3.24.0",
+    "fastify-cors": "^6.0.2",
+    "fastify-socket.io": "^2.0.1",
+    "socket.io": "^4.3.2",
+    "socket.io-client": "^4.3.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.2",
+    "jest": "^27.3.1",
+    "parcel": "^2.0.1",
+    "ts-jest": "^27.0.7",
+    "typescript": "^4.4.4"
+  }
+}
