@@ -1,8 +1,13 @@
 import { PayloadAction } from "@reduxjs/toolkit";
-import { Player } from "../../class/Player";
-import { ADD_PLAYER, UPDATE_PLAYER, REMOVE_PLAYER } from "../actions";
+import { Player } from "../class/Player";
+import {
+  ADD_PLAYER,
+  REMOVE_PLAYER,
+  UPDATE_PLAYER,
+  RESET_STATE,
+} from "../actions";
 
-interface GameState {
+export interface GameState {
   players: {
     [id: string]: Player;
   };
@@ -14,11 +19,13 @@ const initialState = {
 
 export function gameReducer(
   state = initialState,
-  action: PayloadAction<Player>
+  // TODO Should probably split this into two reducers...
+  action: PayloadAction<Player | GameState>
 ) {
+  let player;
   switch (action.type) {
     case ADD_PLAYER:
-      const player = action.payload;
+      player = action.payload as Player;
       return {
         ...state,
         players: {
@@ -28,18 +35,23 @@ export function gameReducer(
       };
 
     case UPDATE_PLAYER:
+      player = action.payload as Player;
       return {
         ...state,
         players: {
           ...state.players,
-          [action.payload.id]: action.payload,
+          [player.id]: player,
         },
       };
 
     case REMOVE_PLAYER:
       const stateCopy = { ...state };
-      delete stateCopy.players[action.payload.id];
+      player = action.payload as Player;
+      delete stateCopy.players[player.id];
       return stateCopy;
+
+    case RESET_STATE:
+      return { ...(action.payload as GameState) };
 
     default:
       return state;

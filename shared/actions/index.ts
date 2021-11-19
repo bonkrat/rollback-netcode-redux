@@ -1,6 +1,7 @@
-import { Player } from "../../class/Player";
+import { Player } from "../class/Player";
 
-export const ADD_PLAYER = "player/add",
+export const RESET_STATE = "game/reset",
+  ADD_PLAYER = "player/add",
   UPDATE_PLAYER = "player/update",
   REMOVE_PLAYER = "player/remove";
 

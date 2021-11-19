@@ -1,16 +1,23 @@
 import fastify from "fastify";
 import fastifyCors from "fastify-cors";
 import fastifyIO from "fastify-socket.io";
-import { Player } from "../class/Player";
-import { state } from "./state";
+import { Player } from "../shared/class/Player";
+import { addPlayer, removePlayer, UPDATE_PLAYER } from "../shared/actions";
 import {
-  addPlayer,
-  removePlayer,
-  updatePlayer,
-  UPDATE_PLAYER,
-} from "./actions";
+  ControlKey,
+  handleUpdatePlayerKeyEvent,
+} from "../shared/handlers/handleUpdatePlayer";
+import { createStore, Reducer } from "redux";
+import { gameReducer } from "../shared/reducers/gameReducer";
 
-const server = fastify();
+const state = createStore(gameReducer as Reducer),
+  server = fastify(),
+  simulateLatency = (cb: () => {}) => {
+    setTimeout(() => {
+      cb();
+    }, Math.floor(Math.random() * 250));
+  };
+
 server.register(fastifyCors, {});
 
 server.register(fastifyIO, {
@@ -19,45 +26,32 @@ server.register(fastifyIO, {
   },
 });
 
-// server.get("/", (req, reply) => {
-//   server.io.emit("hello");
-// });
-
 server.ready().then(() => {
   server.io.on("connection", (socket) => {
     const gameState = state.getState(),
       x = (Object.keys(gameState.players).length + 1) * 20,
       y = 10,
-      player = new Player(socket.id, x, y);
+      player = new Player(socket.id, x, y),
+      emitState = () => {
+        simulateLatency(() => server.io.emit("gamestate", state.getState()));
+      };
 
     state.dispatch(addPlayer(player));
 
-    server.io.emit("gamestate", state.getState());
+    emitState();
 
     socket.conn.on("close", () => {
       state.dispatch(removePlayer(player));
       server.io.emit("gamestate", state.getState());
     });
 
-    socket.on(UPDATE_PLAYER, (code) => {
-      const currState = state.getState();
-
-      const currPlayer = currState.players[player.id];
-
-      if (code === "s") {
-        state.dispatch(updatePlayer({ ...currPlayer, y: currPlayer.y + 1 }));
-      }
-      if (code === "w") {
-        state.dispatch(updatePlayer({ ...currPlayer, y: currPlayer.y - 1 }));
-      }
-      if (code === "a") {
-        state.dispatch(updatePlayer({ ...currPlayer, x: currPlayer.x - 1 }));
-      }
-      if (code === "d") {
-        state.dispatch(updatePlayer({ ...currPlayer, x: currPlayer.x + 1 }));
-      }
-
-      server.io.emit("gamestate", state.getState());
+    socket.on(UPDATE_PLAYER, (key: ControlKey) => {
+      handleUpdatePlayerKeyEvent({
+        store: state,
+        key,
+        playerId: player.id,
+        cb: () => emitState(),
+      });
     });
   });
 });
